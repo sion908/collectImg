@@ -1,0 +1,123 @@
+<html>
+  <head>
+  <link rel="stylesheet" href="./dist/cropper.css" />
+ <script src="dist/cropper.js"></script>
+ <style>
+   .cropper-area img {
+   display: block;
+   max-width: 100%;
+ }
+ </style>
+ </head>
+ <body>
+
+  <input id="target" type="file">
+   <div class="cropper-area">
+    <div>
+   <img id="cropper-img" src="">
+  </div>
+   </div>
+   <!-- <div class="cropperPreview"><img src="" alt=""></div> -->
+     <!-- https://fengyuanchen.github.io/cropperjs/images/picture.jpg -->
+  <button id="crop-btn" hidden>切り抜きをする</button>
+  <div id="result" hidden>
+   <p>切り抜き後の画像</p>
+   <img id="result-img">
+   <form id="sendImg" name="sendImg" action="https://script.google.com/macros/s/AKfycbwEuwl9r3dGz6cAUy-m9uvpQGhjReM41f7OypFEfrIl1oNvSt4hTW_VZLWvt4mGzaXTGg/exec" method="post">
+    <input type="button" value="送信する" onclick="subData()">
+   </form>
+   </div>
+  <script>
+//     document.getElementById( "target" ).addEventListener( "change", function() {
+// 	var fileList = this.files ;
+
+// 	for( var i=0,l=fileList.length; l>i; i++ ) {
+// 		var fileReader = new FileReader() ;
+
+// 		fileReader.onload = function() {
+// 			var dataUri = this.result ;
+// 		}
+
+// 		fileReader.readAsDataURL( fileList[i] ) ;
+// 	}
+// } ) ;
+
+    // <input type="file" id="target" multiple>にchangeイベントを設定
+  document.getElementById( "target" ).addEventListener( "change", function() {
+	// フォームで選択された全ファイルを取得
+	var fileList = this.files ;
+
+	// 個数分の画像を表示する
+	for( var i=0,l=fileList.length; l>i; i++ ) {
+		// FileReaderオブジェクトを作成
+		var fileReader = new FileReader() ;
+
+		// 読み込み後の処理を決めておく
+		fileReader.onload = function() {
+			// Data URIを取得
+			var dataUri = this.result ;
+
+			// HTMLに書き出し (src属性にData URIを指定)
+      document.getElementById('cropper-img').src= this.result;
+			// document.body.innerHTML += '<a href="' + dataUri + '" target="_blank"><img src="' + dataUri + '"></a>' ;
+      preCrop()
+		}
+
+		// ファイルをData URIとして読み込む
+		fileReader.readAsDataURL( fileList[i] ) ;
+	}
+
+  } ) ;
+  const preCrop=()=>{
+   var cropperImg = document.getElementById('cropper-img');
+   var cropperPreview = document.getElementById('cropperPreview');
+   var cropper = new Cropper(cropperImg,{'aspectRatio':1/1});
+   var cl_btn=document.getElementById('crop-btn')
+   cl_btn.addEventListener('click', function () {
+    var canv =cropper.getCroppedCanvas(width=500)
+   resultImgUrl = canv.toDataURL();
+
+   canv.toBlob(function(blob){
+      this.imgblob=blob;
+        // var formData = new FormData();
+        // var xhr = new XMLHttpRequest();
+        // formData.append('__REQUEST_TOKEN__', kintone.getRequestToken());
+        // formData.append('file', blob, file.name);
+
+      var result = document.getElementById('result-img');
+      result.src = resultImgUrl;
+      document.getElementById('result').hidden=false
+      cl_btn.hidden=false
+    })
+   });
+   cl_btn.hidden=false;
+   
+  }
+  const subData=()=>{
+    // 'f1' は form 要素に設定した id とします。
+    const f1 = document.forms.sendImg;
+    const fd = new FormData(f1);
+    fd.append("data", this.imgblob);
+
+    fetch(f1.action, {
+        method: 'POST',
+        body: fd
+    })
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error(`${response.status} ${response.statusText}`);
+        }
+        // レスポンスが JSON 形式で返っていることを想定
+        return response.json();
+    })
+    .then((data) => {
+        console.log('** fetch: then(data)');
+        console.log(data);
+    })
+    .catch((reason) => {
+        // エラー処理
+        console.log('** fetch: catch');
+        console.log(reason);
+    });}
+   </script>
+ </body></html>
